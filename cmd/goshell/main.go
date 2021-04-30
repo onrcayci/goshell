@@ -8,10 +8,12 @@ import (
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	reader := bufio.NewReader(os.Stdin)
 	for {
-		scanner.Scan()
-		input := scanner.Text()
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			panic(err)
+		}
 		argc, argv := goshell.ParseInput(input)
 		goshell.Interpreter(argc, argv)
 	}
