@@ -2,17 +2,17 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
+
+	"github.com/onrcayci/goshell/internal/goshell"
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
+	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(input)
+		scanner.Scan()
+		input := scanner.Text()
+		argc, argv := goshell.ParseInput(input)
+		goshell.Interpreter(argc, argv)
 	}
 }
