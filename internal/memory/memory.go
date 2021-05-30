@@ -1,8 +1,26 @@
 package memory
 
-type MEM struct {
-	Variable string
-	Value    string
+type mem struct {
+	variable string
+	value    string
 }
 
-var Memory []*MEM
+var memory []*mem
+
+func NewMemoryItem(variable, value string) *mem {
+	memoryItem := mem{variable, value}
+	return &memoryItem
+}
+
+func (m *mem) Set() {
+	memory = append(memory, m)
+}
+
+func FindMemoryItem(variable string) string {
+	for _, v := range memory {
+		if v.variable == variable {
+			return v.variable
+		}
+	}
+	return "Variable does not exist!"
+}

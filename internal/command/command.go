@@ -31,7 +31,7 @@ func Set(argc int, args []string) error {
 	if argc < 3 {
 		return errors.New("missing arguments!\nusage: set VAR VALUE")
 	}
-	newVar := &memory.MEM{Variable: args[1], Value: args[2]}
-	memory.Memory = append(memory.Memory, newVar)
+	newVar := memory.NewMemoryItem(args[1], args[2])
+	newVar.Set()
 	return nil
 }
