@@ -1,14 +1,47 @@
 package command
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/onrcayci/goshell/internal/memory"
+	"github.com/onrcayci/goshell/internal/parser"
 )
 
-func Help() {
+func Interpreter(argc int, argv []string) {
+	if argc == 0 {
+		return
+	} else {
+		switch argv[0] {
+		case "help":
+			help()
+		case "quit":
+			quit()
+		case "set":
+			err := set(argc, argv)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		case "print":
+			err := print(argc, argv)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		case "run":
+			err := run(argc, argv)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		default:
+			fmt.Printf("%s: command not found\n", argv[0])
+		}
+	}
+}
+
+func help() {
 	helpText := `Go Shell v0.0.1
 Available Commands:
 COMMAND				DESCRIPTION
@@ -22,12 +55,12 @@ run SCRIPT.TXT			Executes the file SCRIPT.TXT
 	fmt.Println(helpText)
 }
 
-func Quit() {
+func quit() {
 	fmt.Println("Bye!")
 	os.Exit(0)
 }
 
-func Set(argc int, args []string) error {
+func set(argc int, args []string) error {
 	if argc < 3 {
 		return errors.New("missing arguments!\nusage: set VAR VALUE")
 	}
@@ -36,7 +69,7 @@ func Set(argc int, args []string) error {
 	return nil
 }
 
-func Print(argc int, args []string) error {
+func print(argc int, args []string) error {
 	if argc < 2 {
 		return errors.New("missing arguments!\nusage: print VAR")
 	}
@@ -45,5 +78,27 @@ func Print(argc int, args []string) error {
 		return errors.New("variable does not exist")
 	}
 	fmt.Println(varValue)
+	return nil
+}
+
+func run(argc int, args []string) error {
+	if argc < 2 {
+		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
+	}
+	script, err := os.Open(args[1])
+	if err != nil {
+		return err
+	}
+	reader := bufio.NewReader(script)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		argc, argv := parser.ParseInput(line)
+		Interpreter(argc, argv)
+	}
 	return nil
 }
