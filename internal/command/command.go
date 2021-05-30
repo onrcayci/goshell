@@ -19,6 +19,7 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT
 	fmt.Println(helpText)
 }
 
-func Exit() {
+func Quit() {
+	fmt.Println("Bye!")
 	os.Exit(0)
 }

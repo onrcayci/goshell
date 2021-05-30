@@ -9,8 +9,8 @@ func Interpreter(argc int, argv []string) {
 		switch argv[0] {
 		case "help":
 			command.Help()
-		case "exit":
-			command.Exit()
+		case "quit":
+			command.Quit()
 		}
 	}
 }
