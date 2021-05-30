@@ -19,7 +19,7 @@ func (m *mem) Set() {
 func FindMemoryItem(variable string) string {
 	for _, v := range memory {
 		if v.variable == variable {
-			return v.variable
+			return v.value
 		}
 	}
 	return ""
