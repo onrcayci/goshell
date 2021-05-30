@@ -22,5 +22,5 @@ func FindMemoryItem(variable string) string {
 			return v.variable
 		}
 	}
-	return "Variable does not exist!"
+	return ""
 }

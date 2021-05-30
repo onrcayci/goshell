@@ -35,3 +35,15 @@ func Set(argc int, args []string) error {
 	newVar.Set()
 	return nil
 }
+
+func Print(argc int, args []string) error {
+	if argc < 2 {
+		return errors.New("missing arguments!\nusage: print VAR")
+	}
+	varValue := memory.FindMemoryItem(args[1])
+	if varValue == "" {
+		return errors.New("variable does not exist")
+	}
+	fmt.Println(varValue)
+	return nil
+}
