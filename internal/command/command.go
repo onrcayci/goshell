@@ -85,7 +85,7 @@ func run(argc int, args []string) error {
 	if argc < 2 {
 		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
 	}
-	script, err := os.Open(args[1])
+	script, err := os.Open(args[1] + args[2] + args[3])
 	if err != nil {
 		return err
 	}
