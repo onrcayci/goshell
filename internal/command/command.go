@@ -1,8 +1,11 @@
 package command
 
 import (
+	"errors"
 	"fmt"
 	"os"
+
+	"github.com/onrcayci/goshell/internal/memory"
 )
 
 func Help() {
@@ -22,4 +25,13 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT
 func Quit() {
 	fmt.Println("Bye!")
 	os.Exit(0)
+}
+
+func Set(argc int, args []string) error {
+	if argc < 3 {
+		return errors.New("missing arguments!\nusage: set VAR VALUE")
+	}
+	newVar := &memory.MEM{Variable: args[1], Value: args[2]}
+	memory.Memory = append(memory.Memory, newVar)
+	return nil
 }
