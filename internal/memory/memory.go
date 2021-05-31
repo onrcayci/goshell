@@ -13,13 +13,15 @@ type mem struct {
 var memory []*mem
 
 // Function to add a new environment variable to the shell memory.
-func NewMemoryItem(variable, value string) *mem {
-	memoryItem := mem{variable, value}
-	return &memoryItem
-}
-
-func (m *mem) Set() {
-	memory = append(memory, m)
+func NewMemoryItem(variable, value string) {
+	for _, v := range memory {
+		if v.variable == variable {
+			v.value = value
+			return
+		}
+	}
+	memoryItem := &mem{variable, value}
+	memory = append(memory, memoryItem)
 }
 
 // Function to find an environment variable with the given variable name.

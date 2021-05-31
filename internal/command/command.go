@@ -78,8 +78,7 @@ func set(argc int, args []string) error {
 	if argc < 3 {
 		return errors.New("missing arguments!\nusage: set VAR VALUE")
 	}
-	newVar := memory.NewMemoryItem(args[1], args[2])
-	newVar.Set()
+	memory.NewMemoryItem(args[1], args[2])
 	return nil
 }
 
