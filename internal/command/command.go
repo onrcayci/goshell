@@ -27,6 +27,11 @@ func Execute(argc int, argv []string) {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+	case "run":
+		err := run(argc, argv)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	default:
 		fmt.Printf("%s: command not found\n", argv[0])
 	}
@@ -36,7 +41,7 @@ func Execute(argc int, argv []string) {
 // This function enables users to run shell scripts with supported commands.
 // Returns an error if the number of arguments is less than 2 (i.e. "run SCRIPT.TXT").
 // BUG(onrcayci): The function parser.ParseInput parses the filename into 3 tokens, i.e., [<filename> "." <file extension>].
-func Run(argc int, args []string) error {
+func run(argc int, args []string) error {
 	if argc < 2 {
 		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
 	}

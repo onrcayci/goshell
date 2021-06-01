@@ -11,10 +11,6 @@ func Interpreter(argc int, argv []string) {
 	if argc == 0 {
 		return
 	} else {
-		if argv[0] == "run" {
-			command.Run(argc, argv)
-		} else {
-			command.Execute(argc, argv)
-		}
+		command.Execute(argc, argv)
 	}
 }
