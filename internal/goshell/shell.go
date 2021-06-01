@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/onrcayci/goshell/internal/command"
+	"github.com/onrcayci/goshell/internal/interpreter"
 	"github.com/onrcayci/goshell/internal/parser"
 )
 
@@ -21,6 +21,6 @@ func Shell() {
 			panic(err)
 		}
 		argc, argv := parser.ParseInput(input)
-		command.Interpreter(argc, argv)
+		interpreter.Interpreter(argc, argv)
 	}
 }
