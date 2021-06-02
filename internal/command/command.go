@@ -16,6 +16,7 @@ import (
 )
 
 var exitFlag bool = true
+var scriptFlag bool = false
 
 func Execute(argc int, argv []string) {
 	switch argv[0] {
@@ -34,18 +35,27 @@ func Execute(argc int, argv []string) {
 			fmt.Println(err.Error())
 		}
 	case "run":
+		toggleQuitLock()
 		err := run(argc, argv)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		toggleQuitLock()
 	case "exec":
+		toggleQuitLock()
 		err := exec(argc, argv)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		toggleQuitLock()
 	default:
 		fmt.Printf("%s: command not found\n", argv[0])
 	}
+}
+
+func toggleQuitLock() {
+	exitFlag = !exitFlag
+	scriptFlag = !scriptFlag
 }
 
 // Function help which implements the "help" shell command.
@@ -71,10 +81,8 @@ exec p1 p2 p3			Executes concurrent programs: >> exec prog.txt prog2.txt
 // using the function os.Exit(0).
 func quit() {
 	fmt.Println("Bye!")
-	if exitFlag {
+	if exitFlag && !scriptFlag {
 		os.Exit(0)
-	} else {
-		exitFlag = !exitFlag
 	}
 }
 
@@ -115,7 +123,6 @@ func run(argc int, args []string) error {
 	if argc < 2 {
 		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
 	}
-	exitFlag = false
 	// due to the file name tokenization bug, the filename is provided using 3 arguments from args:
 	// args[1] = file name, args[2] = ".", args[3] = file extension.
 	script, err := os.Open(args[1] + args[2] + args[3])
@@ -133,7 +140,6 @@ func run(argc int, args []string) error {
 		argc, argv := parser.ParseInput(line)
 		Execute(argc, argv)
 	}
-	exitFlag = true
 	return nil
 }
 
@@ -153,9 +159,10 @@ func scheduler() {
 			currentPCBElement := kernel.ReadyQueue.Front()
 			currentPCB := currentPCBElement.Value.(*pcb.PCB)
 			kernel.RuntimeCPU.IP = currentPCB.PC
-			quanta := currentPCB.End - currentPCB.PC
+			quanta := (currentPCB.End - 1) - currentPCB.PC
 			if quanta == 0 {
 				ram.FreeRAM(currentPCB.Start, currentPCB.End)
+				kernel.ReadyQueue.Remove(currentPCBElement)
 				continue
 			} else if quanta > 2 {
 				quanta = 2
@@ -175,13 +182,11 @@ func exec(argc int, argv []string) error {
 		return errors.New("missing arguments!\nusage: exec p1.txt [p2.txt] [p3.txt]")
 	}
 	for i := 0; (3 * i) < len(scripts); i++ {
-		err := kernel.MyInit(scripts[i] + scripts[i+1] + scripts[i+2])
+		err := kernel.MyInit(scripts[3*i] + scripts[3*i+1] + scripts[3*i+2])
 		if err != nil {
 			return err
 		}
 	}
-	exitFlag = false
 	scheduler()
-	exitFlag = true
 	return nil
 }
