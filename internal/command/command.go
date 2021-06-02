@@ -7,40 +7,44 @@ import (
 	"io"
 	"os"
 
+	"github.com/onrcayci/goshell/internal/cpu"
+	"github.com/onrcayci/goshell/internal/kernel"
 	"github.com/onrcayci/goshell/internal/memory"
 	"github.com/onrcayci/goshell/internal/parser"
+	"github.com/onrcayci/goshell/internal/pcb"
+	"github.com/onrcayci/goshell/internal/ram"
 )
 
-// Interpreter takes in the tokenized input slice (argv) and the length of the slice(arc)
-// and uses a switch statement to determine which shell command to execute.
-// Supported commands: "help", "quit", "set", "print" and "run".
-func Interpreter(argc int, argv []string) {
-	if argc == 0 {
-		return
-	} else {
-		switch argv[0] {
-		case "help":
-			help()
-		case "quit":
-			quit()
-		case "set":
-			err := set(argc, argv)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		case "print":
-			err := print(argc, argv)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		case "run":
-			err := run(argc, argv)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		default:
-			fmt.Printf("%s: command not found\n", argv[0])
+var exitFlag int = 0
+
+func Execute(argc int, argv []string) {
+	switch argv[0] {
+	case "help":
+		help()
+	case "quit":
+		quit()
+	case "set":
+		err := set(argc, argv)
+		if err != nil {
+			fmt.Println(err.Error())
 		}
+	case "print":
+		err := print(argc, argv)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	case "run":
+		err := run(argc, argv)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	case "exec":
+		err := exec(argc, argv)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	default:
+		fmt.Printf("%s: command not found\n", argv[0])
 	}
 }
 
@@ -57,6 +61,7 @@ quit				Exits / terminates the shell with "Bye!"
 set VAR STRING			Assigns a value to shell memory
 print VAR			Displays the STRING assigned to VAR
 run SCRIPT.TXT			Executes the file SCRIPT.TXT
+exec p1 p2 p3			Executes concurrent programs: >> exec prog.txt prog2.txt
 `
 	fmt.Println(helpText)
 }
@@ -66,7 +71,11 @@ run SCRIPT.TXT			Executes the file SCRIPT.TXT
 // using the function os.Exit(0).
 func quit() {
 	fmt.Println("Bye!")
-	os.Exit(0)
+	if exitFlag == 0 {
+		os.Exit(0)
+	} else {
+		exitFlag--
+	}
 }
 
 // Function set which implements the "set" shell command.
@@ -106,23 +115,74 @@ func run(argc int, args []string) error {
 	if argc < 2 {
 		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
 	}
-
 	// due to the file name tokenization bug, the filename is provided using 3 arguments from args:
 	// args[1] = file name, args[2] = ".", args[3] = file extension.
 	script, err := os.Open(args[1] + args[2] + args[3])
 	if err != nil {
 		return err
 	}
+	exitFlag++
 	reader := bufio.NewReader(script)
 	for {
 		line, err := reader.ReadString('\n')
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			exitFlag--
 			return err
 		}
 		argc, argv := parser.ParseInput(line)
-		Interpreter(argc, argv)
+		Execute(argc, argv)
 	}
+	return nil
+}
+
+func runForQuanta(c *cpu.CPU) {
+	for c.Quanta != 0 {
+		c.IR = ram.RAM[c.IP]
+		c.IP++
+		c.Quanta--
+		argc, argv := parser.ParseInput(c.IR)
+		Execute(argc, argv)
+	}
+}
+
+func scheduler() {
+	for kernel.ReadyQueue.Front() != nil {
+		if kernel.RuntimeCPU.Quanta == 0 || kernel.RuntimeCPU.IR == "" {
+			currentPCBElement := kernel.ReadyQueue.Front()
+			currentPCB := currentPCBElement.Value.(*pcb.PCB)
+			kernel.RuntimeCPU.IP = currentPCB.PC
+			quanta := (currentPCB.End - 1) - currentPCB.PC
+			if quanta == 0 {
+				ram.FreeRAM(currentPCB.Start, currentPCB.End)
+				kernel.ReadyQueue.Remove(currentPCBElement)
+				continue
+			} else if quanta > 2 {
+				quanta = 2
+			}
+			kernel.RuntimeCPU.Quanta = quanta
+			runForQuanta(kernel.RuntimeCPU)
+			currentPCB.PC = kernel.RuntimeCPU.IP
+			kernel.ReadyQueue.Remove(currentPCBElement)
+			kernel.ReadyQueue.PushBack(currentPCB)
+		}
+	}
+}
+
+func exec(argc int, argv []string) error {
+	scripts := argv[1:]
+	if len(scripts) == 0 {
+		return errors.New("missing arguments!\nusage: exec p1.txt [p2.txt] [p3.txt]")
+	}
+	for i := 0; (3 * i) < len(scripts); i++ {
+		err := kernel.MyInit(scripts[3*i] + scripts[3*i+1] + scripts[3*i+2])
+		if err != nil {
+			ram.FreeRAM(0, 1000)
+			return err
+		}
+	}
+	exitFlag++
+	scheduler()
 	return nil
 }
