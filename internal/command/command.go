@@ -16,7 +16,6 @@ import (
 )
 
 var exitFlag bool = true
-var scriptFlag bool = false
 
 func Execute(argc int, argv []string) {
 	switch argv[0] {
@@ -35,27 +34,18 @@ func Execute(argc int, argv []string) {
 			fmt.Println(err.Error())
 		}
 	case "run":
-		toggleQuitLock()
 		err := run(argc, argv)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		toggleQuitLock()
 	case "exec":
-		toggleQuitLock()
 		err := exec(argc, argv)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		toggleQuitLock()
 	default:
 		fmt.Printf("%s: command not found\n", argv[0])
 	}
-}
-
-func toggleQuitLock() {
-	exitFlag = !exitFlag
-	scriptFlag = !scriptFlag
 }
 
 // Function help which implements the "help" shell command.
@@ -81,7 +71,7 @@ exec p1 p2 p3			Executes concurrent programs: >> exec prog.txt prog2.txt
 // using the function os.Exit(0).
 func quit() {
 	fmt.Println("Bye!")
-	if exitFlag && !scriptFlag {
+	if exitFlag {
 		os.Exit(0)
 	}
 }
@@ -129,17 +119,20 @@ func run(argc int, args []string) error {
 	if err != nil {
 		return err
 	}
+	exitFlag = false
 	reader := bufio.NewReader(script)
 	for {
 		line, err := reader.ReadString('\n')
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			exitFlag = true
 			return err
 		}
 		argc, argv := parser.ParseInput(line)
 		Execute(argc, argv)
 	}
+	exitFlag = true
 	return nil
 }
 
@@ -149,7 +142,9 @@ func runForQuanta(c *cpu.CPU) {
 		c.IP++
 		c.Quanta--
 		argc, argv := parser.ParseInput(c.IR)
+		exitFlag = false
 		Execute(argc, argv)
+		exitFlag = true
 	}
 }
 
@@ -184,9 +179,12 @@ func exec(argc int, argv []string) error {
 	for i := 0; (3 * i) < len(scripts); i++ {
 		err := kernel.MyInit(scripts[3*i] + scripts[3*i+1] + scripts[3*i+2])
 		if err != nil {
+			ram.FreeRAM(0, 1000)
 			return err
 		}
 	}
+	exitFlag = false
 	scheduler()
+	exitFlag = true
 	return nil
 }
