@@ -52,7 +52,7 @@ func Execute(argc int, argv []string) {
 // Returns the help text which outputs all of the supported commands
 // and their description.
 func help() {
-	helpText := `Go Shell v1.0
+	helpText := `Go Shell v2.0
 Available Commands:
 COMMAND				DESCRIPTION
 
