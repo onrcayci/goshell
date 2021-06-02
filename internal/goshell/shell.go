@@ -3,9 +3,10 @@ package goshell
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 
-	"github.com/onrcayci/goshell/internal/command"
+	"github.com/onrcayci/goshell/internal/interpreter"
 	"github.com/onrcayci/goshell/internal/parser"
 )
 
@@ -17,10 +18,12 @@ func Shell() {
 	for {
 		fmt.Printf(">> ")
 		input, err := reader.ReadString('\n')
-		if err != nil {
+		if err == io.EOF {
+			os.Exit(1)
+		} else if err != nil {
 			panic(err)
 		}
 		argc, argv := parser.ParseInput(input)
-		command.Interpreter(argc, argv)
+		interpreter.Interpreter(argc, argv)
 	}
 }
