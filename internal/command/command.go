@@ -37,35 +37,6 @@ func Execute(argc int, argv []string) {
 	}
 }
 
-// Function run which implements the "run" shell command.
-// This function enables users to run shell scripts with supported commands.
-// Returns an error if the number of arguments is less than 2 (i.e. "run SCRIPT.TXT").
-// BUG(onrcayci): The function parser.ParseInput parses the filename into 3 tokens, i.e., [<filename> "." <file extension>].
-func run(argc int, args []string) error {
-	if argc < 2 {
-		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
-	}
-
-	// due to the file name tokenization bug, the filename is provided using 3 arguments from args:
-	// args[1] = file name, args[2] = ".", args[3] = file extension.
-	script, err := os.Open(args[1] + args[2] + args[3])
-	if err != nil {
-		return err
-	}
-	reader := bufio.NewReader(script)
-	for {
-		line, err := reader.ReadString('\n')
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-		argc, argv := parser.ParseInput(line)
-		Execute(argc, argv)
-	}
-	return nil
-}
-
 // Function help which implements the "help" shell command.
 // Returns the help text which outputs all of the supported commands
 // and their description.
@@ -117,5 +88,34 @@ func print(argc int, args []string) error {
 		return errors.New("variable does not exist")
 	}
 	fmt.Println(varValue)
+	return nil
+}
+
+// Function run which implements the "run" shell command.
+// This function enables users to run shell scripts with supported commands.
+// Returns an error if the number of arguments is less than 2 (i.e. "run SCRIPT.TXT").
+// BUG(onrcayci): The function parser.ParseInput parses the filename into 3 tokens, i.e., [<filename> "." <file extension>].
+func run(argc int, args []string) error {
+	if argc < 2 {
+		return errors.New("missing arguments!\nusage: run SCRIPT.TXT")
+	}
+
+	// due to the file name tokenization bug, the filename is provided using 3 arguments from args:
+	// args[1] = file name, args[2] = ".", args[3] = file extension.
+	script, err := os.Open(args[1] + args[2] + args[3])
+	if err != nil {
+		return err
+	}
+	reader := bufio.NewReader(script)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		argc, argv := parser.ParseInput(line)
+		Execute(argc, argv)
+	}
 	return nil
 }
