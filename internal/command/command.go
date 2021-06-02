@@ -15,7 +15,7 @@ import (
 	"github.com/onrcayci/goshell/internal/ram"
 )
 
-var exitFlag bool = true
+var exitFlag int = 0
 
 func Execute(argc int, argv []string) {
 	switch argv[0] {
@@ -71,8 +71,10 @@ exec p1 p2 p3			Executes concurrent programs: >> exec prog.txt prog2.txt
 // using the function os.Exit(0).
 func quit() {
 	fmt.Println("Bye!")
-	if exitFlag {
+	if exitFlag == 0 {
 		os.Exit(0)
+	} else {
+		exitFlag--
 	}
 }
 
@@ -119,20 +121,19 @@ func run(argc int, args []string) error {
 	if err != nil {
 		return err
 	}
-	exitFlag = false
+	exitFlag++
 	reader := bufio.NewReader(script)
 	for {
 		line, err := reader.ReadString('\n')
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			exitFlag = true
+			exitFlag--
 			return err
 		}
 		argc, argv := parser.ParseInput(line)
 		Execute(argc, argv)
 	}
-	exitFlag = true
 	return nil
 }
 
@@ -142,9 +143,7 @@ func runForQuanta(c *cpu.CPU) {
 		c.IP++
 		c.Quanta--
 		argc, argv := parser.ParseInput(c.IR)
-		exitFlag = false
 		Execute(argc, argv)
-		exitFlag = true
 	}
 }
 
@@ -183,8 +182,7 @@ func exec(argc int, argv []string) error {
 			return err
 		}
 	}
-	exitFlag = false
+	exitFlag++
 	scheduler()
-	exitFlag = true
 	return nil
 }
